@@ -1,22 +1,30 @@
-%w[rubygems haml sinatra date ./sati-lib enumerator logger].each{|x| require x}
-gem "ruby-mysql", "= 2.9.3"
-require "mysql"
+%w[rubygems haml sinatra date ./sati-lib ./db-lib enumerator logger ./syncer].each{|x| require x}
 
-$log = Logger.new('app.log')
+# $log = Logger.new('app.log')
 
-$log_file = File.new("sinatra.log", "a")
-STDOUT.reopen($log_file)
-STDERR.reopen($log_file)
+# $log_file = File.new("sinatra.log", "a")
+# STDOUT.reopen($log_file)
+# STDERR.reopen($log_file)
+STDOUT.sync = true
+STDERR.sync = true
 
 POC_DATUM = ["6.9.2010", 0]
 DANI = %w(pon uto sri cet pet sub ned)
 
-class Array
-  def has(v)
-    self.find{|x| return true if x==v}
+@syncing = 0
+
+x = Thread.new {
+  sync_timeout = 600
+  sleep 5
+  loop do
+    start_t = Time.now
+    @syncing=1
+    sync_cals(sync_timeout-1)
+    @syncing=0
+    razl = (Time.now-start_t)
+    sleep sync_timeout-razl.to_i if razl>0
   end
-  false
-end
+}
 
 configure do
   error 404 do
@@ -42,53 +50,7 @@ helpers do
   end
 end
 
-def query_and_log(q)
-  puts "SQL: #{q.inspect}"
-  r = @c.query q
-  puts "RET: #{r.count.inspect}"
-  r
-end
-
-class SeqConn # MySQL client
-  def initialize(host, user, passw, db)
-    @data = [host, user, passw, db]
-    @c = nil
-  end
-  def open
-    $log.debug "mysql conn open"
-    @c = Mysql.real_connect *@data
-  end
-  def close
-    $log.debug "mysql conn close"
-    @c.close
-  end
-  def razredi
-    @c.query("select concat(gen, '_', raz) from razredi order by gen, raz asc;").to_a
-  end
-  def raspored(raz_id)
-    raise "raz_id must be int!" if ! raz_id =~ /^\d+$/
-    h={}; i=0
-    @c.query("select sat, pon, uto, sri, cet, pet, sub from rasporedi where raz_id=#{raz_id} order by sat;").each_hash{|x| h[i]=x; i+=1}
-    return h
-  end
-  def eventi(raz_id, tj)
-    puts "eventi(): "
-    puts raz_id
-    puts tj
-    raise "raz_id must be int!" if ! raz_id =~ /^\d+$/
-    raise "tj must be int!" if ! tj =~ /^\d+$/
-    query_and_log("select weekday(dan), txt, dsc from eventi where raz_id=#{raz_id} and week(dan)=(week(date(now())-1)+#{tj});").to_a
-  end
-  def raz_id(gen, raz)
-    r = query_and_log("select id from razredi where gen='#{gen}' and raz='#{raz}' limit 1;").first[0]
-  end
-  def query(str)
-    query_and_log str
-  end
-end
-
-B = SeqConn.new  *(File.readlines("db.conf").first[/(.+)\n?/,1].split(":")[0..3])
-$log.debug "B = SeqConn.new"
+B = SeqConn.new *(File.readlines("db.conf").first[/(.+)\n?/,1].split(":")[0..3])
 
 def smjena(datum) # in: <Time>; out: 0 ili 1 (jut. ili pod.)
   d=Date.strptime(POC_DATUM[0], "%d.%m.%Y")
@@ -215,6 +177,8 @@ end
 get '/test' do
   haml :test
 end
+
+# x.join
 
 __END__
 
