@@ -46,6 +46,7 @@ configure do
   set :dump_errors, false
   set :some_custom_option, false
   set :environment, :production
+  use Rack::Session::Cookie, :key => '_rasapp2_key1', :domain => 'vps1.bkrsta.co.cc', :secret => 'setnoirsehdoairsh'
 end
 
 def smjena(datum) # in: <Time>; out: 0 ili 1 (jut. ili pod.)
