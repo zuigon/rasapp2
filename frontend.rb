@@ -1,11 +1,12 @@
 require "rubygems"
-require "sinatra"
 require "haml"
+require "sinatra"
+require "date"
 require "./sati-lib"
 
 require "enumerator" # za collect Array-a s ID-om
-require "timeout"
-require "socket"
+# require "timeout"
+# require "socket"
 
 gem "ruby-mysql", "= 2.9.3"
 require "mysql"
@@ -50,7 +51,7 @@ configure do
 end
 
 def smjena(datum) # in: <Time>; out: 0 ili 1 (jut. ili pod.)
-  d=DateTime.strptime(POC_DATUM[0], "%d.%m.%Y")
+  d=Date.strptime(POC_DATUM[0], "%d.%m.%Y")
   r=((datum.strftime("%W").to_i - d.strftime("%W").to_i).abs + POC_DATUM[1])%2
   r=(r+1)%2 if DateTime.now.strftime("%w")=="0"
   r
@@ -154,7 +155,7 @@ def prvi_dan_tj
 end
 
 def raz(str) # in: razred_string; out: formatirani raz., npr.: {in: 2009_a; out: 2.a}
-  d = DateTime.strptime("#{str.split('_')[0].to_i}/09", "%Y/%m")
+  d = DateTime.parse("#{str.split('_')[0].to_i}/09", "%Y/%m")
   return false if d>DateTime.now
   "#{(1+((DateTime.now-d)/365).to_i)}.#{str[/_(.+)$/, 1]}"
 end
