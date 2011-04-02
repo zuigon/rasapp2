@@ -2,16 +2,16 @@
 
 # $log = Logger.new('app.log')
 
-# $log_file = File.new("sinatra.log", "a")
-# STDOUT.reopen($log_file)
-# STDERR.reopen($log_file)
-STDOUT.sync = true
-STDERR.sync = true
+if File.exist? 'to_log'
+  $log_file = File.new("sinatra.log", "a")
+  STDOUT.reopen($log_file)
+  STDERR.reopen($log_file)
+end
 
 POC_DATUM = ["6.9.2010", 0]
 DANI = %w(pon uto sri cet pet sub ned)
 
-$syncing = 0
+# $syncing = 0
 
 x = Thread.new {
   sync_timeout = 600
@@ -19,9 +19,9 @@ x = Thread.new {
   loop do
     begin
       start_t = Time.now
-      $syncing=1
+      # $syncing=1
       sync_cals(sync_timeout-1)
-      $syncing=0
+      # $syncing=0
       razl = (Time.now-start_t)
       sleep sync_timeout-razl.to_i if razl>0
       # puts "[syncer] sync end"
