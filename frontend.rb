@@ -47,6 +47,8 @@ configure do
   use Rack::Session::Cookie, :key => '_rasapp2_key1', :domain => 'vps1.bkrsta.co.cc', :secret => 'setnoirsehdoairsh'
 
   set :env, :production
+  set :raise_errors, Proc.new { false }
+  set :show_exceptions, false
   # set :raise_errors, true
 
   LOGGER = Logger.new("sinatra.log")
