@@ -5,8 +5,6 @@ require "date"
 require "./sati-lib"
 
 require "enumerator" # za collect Array-a s ID-om
-# require "timeout"
-# require "socket"
 
 gem "ruby-mysql", "= 2.9.3"
 require "mysql"
@@ -15,18 +13,13 @@ require "logger"
 
 $log = Logger.new('app.log')
 
-# log = File.new("sinatra.log", "a")
-# STDOUT.reopen(log)
-# STDERR.reopen(log)
-
+$log_file = File.new("sinatra.log", "a")
+STDOUT.reopen($log_file)
+STDERR.reopen($log_file)
 
 POC_DATUM = ["6.9.2010", 0]
 
 DANI = %w(pon uto sri cet pet sub ned)
-
-# SOCK_TIMEOUT = 0.5
-# HELO_TIMEOUT = 0.5
-# RESP_TIMEOUT = 1.5
 
 class Array
   def has(v)
@@ -47,14 +40,19 @@ configure do
   # set :dump_errors, false
   # set :some_custom_option, false
   # set :environment, :production
+  # set :raise_errors, true
   use Rack::Session::Cookie, :key => '_rasapp2_key1', :domain => 'vps1.bkrsta.co.cc', :secret => 'setnoirsehdoairsh'
+
+  set :env, :production
+  set :raise_errors, true
+
+  LOGGER = Logger.new("sinatra.log")
 end
 
-def smjena(datum) # in: <Time>; out: 0 ili 1 (jut. ili pod.)
-  d=Date.strptime(POC_DATUM[0], "%d.%m.%Y")
-  r=((datum.strftime("%W").to_i - d.strftime("%W").to_i).abs + POC_DATUM[1])%2
-  r=(r+1)%2 if DateTime.now.strftime("%w")=="0"
-  r
+helpers do
+  def logger
+    LOGGER
+  end
 end
 
 class SeqConn # MySQL client
@@ -92,69 +90,21 @@ class SeqConn # MySQL client
   end
 end
 
-# class Back
-#   def initialize(s)
-#     raise "Adresa servera mora biti u formatu IP_ADDR:PORT" if ! s =~ /^\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}:\d{1,5}$/
-#     @srv, @sock = s, nil
-#   end
-# 
-#   def get(str)
-#     case str
-#     when "helo"
-#       return "ok"
-#       break
-#     when "razredi"
-#       D.select "razredi"
-#       break
-#     end
-#   end
-# 
-# end
-
-# class BackendConnector
-#   def initialize(s)
-#     raise "Adresa servera mora biti u formatu IP_ADDR:PORT" if ! s =~ /^\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}:\d{1,5}$/
-#     @srv  = s
-#     @sock = nil
-#   end
-# 
-#   def get(str)
-#     raise "str mora biti jedna linija sa komandama od slova, brojeva i razmaka" if ! str =~ /^[a-z0-9 ]+$/
-#     open_conn()
-#     @sock.print("#{str}\n")
-#     resp = Timeout::timeout(RESP_TIMEOUT){ @sock.gets.chop }
-#     @sock.gets
-#     close_conn()
-#     return resp
-#   end
-# 
-#   def open_conn()
-#     Timeout::timeout(SOCK_TIMEOUT){
-#       # napravi konekciju na server
-#       @sock = TCPSocket.open(@srv[/^(.+):/, 1], @srv[/:(.+)$/, 1])
-#     }
-#     @sock.print("HELO\n")
-#     if Timeout::timeout(HELO_TIMEOUT){ @sock.gets.chop } != "OK"
-#       raise "Server nije odgovorio na HELO"
-#     end
-#   end
-# 
-#   def close_conn()
-#     @sock.close
-#   end
-# 
-# end
-
-# B = BackendConnector.new("127.0.0.1:7007")
-
 B = SeqConn.new  *(File.readlines("db.conf").first[/(.+)\n?/,1].split(":")[0..3])
 $log.debug "B = SeqConn.new"
+
+def smjena(datum) # in: <Time>; out: 0 ili 1 (jut. ili pod.)
+  d=Date.strptime(POC_DATUM[0], "%d.%m.%Y")
+  r=((datum.strftime("%W").to_i - d.strftime("%W").to_i).abs + POC_DATUM[1])%2
+  r=(r+1)%2 if DateTime.now.strftime("%w")=="0"
+  r
+end
 
 def prvi_dan_tj
   DateTime.now - DateTime.now.strftime("%w").to_i
 end
 
-def raz(str) # in: razred_string; out: formatirani raz., npr.: {in: 2009_a; out: 2.a}
+def raz(str) # 2009_a => 2.a
   d = DateTime.parse("#{str.split('_')[0].to_i}/09", "%Y/%m")
   return false if d>DateTime.now
   "#{(1+((DateTime.now-d)/365).to_i)}.#{str[/_(.+)$/, 1]}"
