@@ -1,4 +1,4 @@
-%w[rubygems open-uri ./gcal-lib ./ical2db ./db-lib system_timer].each{|x| require x}
+%w[rubygems active_support/core_ext/numeric/time.rb open-uri ./gcal-lib ./ical2db ./db-lib system_timer].each{|x| require x}
 
 def sync_cals(timeout=600)
   urls = []

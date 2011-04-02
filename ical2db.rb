@@ -7,7 +7,6 @@ class Ical2db
   def initialize(cal, mhost, muser, mpass, mdb, raz_id=0)
     @cal = CalendarReader::Calendar.new cal
     @c = Mysql.real_connect mhost, muser, mpass, mdb
-    @out = $stdout
     @raz_id = raz_id
   end
 
@@ -55,12 +54,11 @@ class Ical2db
       end
     end
 
-    @out.puts "[  inserted: #{inserted}   changed: #{changed}   skipped: #{skipped}   deleted: #{deleted}  ]"
-    @out.printf "TIME: %.3f\n", Time.now-start
+    "[  inserted: #{inserted}   changed: #{changed}   skipped: #{skipped}   deleted: #{deleted}  ]\n"+sprintf("TIME: %.3f\n", Time.now-start)
   end
 end
 
 if __FILE__ == $0
   cl = Ical2db.new "file:///Users/bkrsta/Projects/raspored-app2/basic.ics", "192.168.1.250", "root", "bkrsta", "ras2_1", "2009_a"
-  cl.sync
+  puts cl.sync
 end

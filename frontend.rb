@@ -11,18 +11,24 @@ STDERR.sync = true
 POC_DATUM = ["6.9.2010", 0]
 DANI = %w(pon uto sri cet pet sub ned)
 
-@syncing = 0
+$syncing = 0
 
 x = Thread.new {
   sync_timeout = 600
   sleep 5
   loop do
-    start_t = Time.now
-    @syncing=1
-    sync_cals(sync_timeout-1)
-    @syncing=0
-    razl = (Time.now-start_t)
-    sleep sync_timeout-razl.to_i if razl>0
+    begin
+      start_t = Time.now
+      $syncing=1
+      sync_cals(sync_timeout-1)
+      $syncing=0
+      razl = (Time.now-start_t)
+      sleep sync_timeout-razl.to_i if razl>0
+      puts "[syncer] sync end"
+    rescue Exception => e
+      puts "[syncer] ERROR: #{e}"
+      break
+    end
   end
 }
 
@@ -266,6 +272,7 @@ __END__
       = '$(function(){$("table#tbl_ras tr td, table#tbl_ras th.events_l").hover(function(){$(this).addClass("highlight");},function(){$(this).removeClass("highlight");})})'
   %body
     %div{:id=>"container"}
+      %p
 
       = yield
 
