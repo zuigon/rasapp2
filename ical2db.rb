@@ -63,5 +63,5 @@ class Ical2db
   end
 end
 
-cl = Ical2db.new "file:///Users/bkrsta/Projects/raspored-app/basic.ics", "192.168.1.250", "root", "bkrsta", "ras2_1"
+cl = Ical2db.new "file:///Users/bkrsta/Projects/raspored-app2/basic.ics", "192.168.1.250", "root", "bkrsta", "ras2_1"
 cl.sync
