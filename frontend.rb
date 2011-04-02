@@ -15,9 +15,9 @@ require "logger"
 
 $log = Logger.new('app.log')
 
-log = File.new("sinatra.log", "a")
-STDOUT.reopen(log)
-STDERR.reopen(log)
+# log = File.new("sinatra.log", "a")
+# STDOUT.reopen(log)
+# STDERR.reopen(log)
 
 
 POC_DATUM = ["6.9.2010", 0]
@@ -42,11 +42,11 @@ configure do
   error 500 do
     haml "%h1.err ... excuse me while I kiss the sky! (Greska)\n%h2.err greska se dogodila sada da se ne bi dogodila kasnije"
   end
-  set :sessions, true
-  set :logging, true
-  set :dump_errors, false
-  set :some_custom_option, false
-  set :environment, :production
+  # set :sessions, true
+  # set :logging, true
+  # set :dump_errors, false
+  # set :some_custom_option, false
+  # set :environment, :production
   use Rack::Session::Cookie, :key => '_rasapp2_key1', :domain => 'vps1.bkrsta.co.cc', :secret => 'setnoirsehdoairsh'
 end
 
