@@ -1,15 +1,6 @@
-require "rubygems"
-require "haml"
-require "sinatra"
-require "date"
-require "./sati-lib"
-
-require "enumerator" # za collect Array-a s ID-om
-
+%w[rubygems haml sinatra date ./sati-lib enumerator logger].each{|x| require x}
 gem "ruby-mysql", "= 2.9.3"
 require "mysql"
-
-require "logger"
 
 $log = Logger.new('app.log')
 
@@ -18,7 +9,6 @@ STDOUT.reopen($log_file)
 STDERR.reopen($log_file)
 
 POC_DATUM = ["6.9.2010", 0]
-
 DANI = %w(pon uto sri cet pet sub ned)
 
 class Array
@@ -38,18 +28,10 @@ configure do
   error do
     haml "%h1.err Grijeska cetiri nula cetiri ..."
   end
-  # set :sessions, true
-  # set :logging, true
-  # set :dump_errors, false
-  # set :some_custom_option, false
-  # set :environment, :production
-  # set :raise_errors, true
   use Rack::Session::Cookie, :key => '_rasapp2_key1', :domain => 'vps1.bkrsta.co.cc', :secret => 'setnoirsehdoairsh'
 
-  set :env, :production
   set :raise_errors, Proc.new { false }
   set :show_exceptions, false
-  # set :raise_errors, true
 
   LOGGER = Logger.new("sinatra.log")
 end
@@ -58,6 +40,13 @@ helpers do
   def logger
     LOGGER
   end
+end
+
+def query_and_log(q)
+  puts "SQL: #{q.inspect}"
+  r = @c.query q
+  puts "RET: #{r.count.inspect}"
+  r
 end
 
 class SeqConn # MySQL client
@@ -83,15 +72,18 @@ class SeqConn # MySQL client
     return h
   end
   def eventi(raz_id, tj)
+    puts "eventi(): "
+    puts raz_id
+    puts tj
     raise "raz_id must be int!" if ! raz_id =~ /^\d+$/
     raise "tj must be int!" if ! tj =~ /^\d+$/
-    @c.query("select weekday(dan), txt, dsc from eventi where raz_id=#{raz_id} and week(dan)=(week(date(now())-1)+#{tj});").to_a
+    query_and_log("select weekday(dan), txt, dsc from eventi where raz_id=#{raz_id} and week(dan)=(week(date(now())-1)+#{tj});").to_a
   end
   def raz_id(gen, raz)
-    @c.query("select id from razredi where gen='#{gen}' and raz='#{raz}';").first[0]
+    r = query_and_log("select id from razredi where gen='#{gen}' and raz='#{raz}' limit 1;").first[0]
   end
   def query(str)
-    @c.query str
+    query_and_log str
   end
 end
 
@@ -137,16 +129,19 @@ end
     @str = "20#{str}" if @str =~ /^\d\d_[a-z]$/
 
     @n_tj = 2 # broj tjedana za prikaz
-
-    @tbls = []; @ev = []
+    ept   = 0
+    @tbls = []
+    @ev   = []
     (0..@n_tj-1).each{|i|
-      @tbls << ras_za_tj(@str, i)
+      r = ras_za_tj(@str, i)
+      @tbls << r
       @ev[i]={}
+      ept=1 and break if r=={}
       DANI.each{|x| @ev[i][x]=[] }
-      (B.eventi 0, i).each{|e| @ev[i][DANI[e[0].to_i]] << [e[1], e[2]] }
+      B.eventi(B.raz_id(*@str.split("_")), i).each{|e| @ev[i][DANI[e[0].to_i]] << [e[1], e[2]] }
     }
 
-    haml :razred#, :layout => false
+    haml ept ? :ras_nije_podesen : :razred
   end
 end
 
@@ -185,7 +180,7 @@ ul.svi_razredi li { padding: 10px 0; font-size: 200%; }
 ul.svi_razredi li a { text-decoration: none; color: red; font-family: georgia; text-decoration: overline underline; letter-spacing: 5px; }
 h1.err, h2.err { font-family: georgia; font-style: italic; }
 h1.raz_naslov { font-family: georgia; font-size: 1000%; float: left; margin: 0; padding: 0; }
-div#fl_d { position: relative; top: 50px; width: 200px; }
+div#fl_d { position: relative; top: 0px; width: 200px; }
 div#varijante { clear: both; }
 span#varijante a { color: orange; margin: 0 5px; text-decoration: none; }
 span#varijante a[selected='1'] { text-decoration: underline; }
@@ -223,6 +218,11 @@ end
 
 __END__
 
+@@ras_nije_podesen
+%h2.err Raspored nije podesen za ovaj razred ...
+%p
+  %a{:href=>"/"} < Svi razredi
+
 @@razredi
 %center
   %table#t
@@ -237,14 +237,6 @@ __END__
               %a{:href=>"/#{r}"}= raz r
 
 @@ras_tbl
-- if @tj == 0
-  - str = "Ovaj tjedan "
-- elsif @tj == 1
-  - str = "Slijedeci tjedan "
-- else
-  - str = ""
-%h2= "#{str} (#{(smjena DateTime.now+@tj*7)==0 ? "1." : "2."} smjena)"
-
 %table{:border=>2, :id=>"tbl_ras"}
   %tr
     / dani
@@ -294,11 +286,7 @@ __END__
 %div.cb
 
 %p
-  %a{:href=>"/raz/#{@str}/prijedlog"} Prijedlog novog eventa
-  &nbsp; | &nbsp;
-  %a{:href=>"/"} Svi razredi
-%p
-  %a{:href=>"http://github.com/bkrsta/raspored-app"} Source
+  %a{:href=>"/"} < Svi razredi
 
 - B.close
 
@@ -314,10 +302,6 @@ __END__
       = '$(function(){$("table#tbl_ras tr td, table#tbl_ras th.events_l").hover(function(){$(this).addClass("highlight");},function(){$(this).removeClass("highlight");})})'
   %body
     %div{:id=>"container"}
-      - if (!!(request.referer.match(/http:\/\/raz(red)?.bkrsta.co.cc\/.+/)[0] rescue false))
-        %a{:href=>request.referer, :style=>"color: red;"} &lt;&lt; Nazad na forum
-      - else
-        %a{:href=>"http://razred.bkrsta.co.cc/", :style=>"color: red;"} Forum
 
       = yield
 
