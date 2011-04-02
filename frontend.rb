@@ -24,7 +24,7 @@ x = Thread.new {
       $syncing=0
       razl = (Time.now-start_t)
       sleep sync_timeout-razl.to_i if razl>0
-      puts "[syncer] sync end"
+      # puts "[syncer] sync end"
     rescue Exception => e
       puts "[syncer] ERROR: #{e}"
       break
