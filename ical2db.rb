@@ -4,10 +4,11 @@ gem "ruby-mysql", "= 2.9.3"
 require "mysql"
 
 class Ical2db
-  def initialize(cal, mhost, muser, mpass, mdb, out=$stdout)
+  def initialize(cal, mhost, muser, mpass, mdb, raz_id=0)
     @cal = CalendarReader::Calendar.new cal
     @c = Mysql.real_connect mhost, muser, mpass, mdb
-    @out = out
+    @out = $stdout
+    @raz_id = raz_id
   end
 
   def sync()
@@ -18,7 +19,7 @@ class Ical2db
 
     @cal.events.collect{|e|
       s = [
-        0,
+        @raz_id,
         e.uid || "",
         e.summary || "",
         (e.description || "").gsub(/\\\\/, ''),
@@ -37,11 +38,7 @@ class Ical2db
         end
 
         if !sets.empty?
-          q = "update eventi set  #{sets.join ", "} where uid = '#{s[1]}'"
-          # @out.puts "QUERY: #{q.inspect}"
-          # @out.puts "Diff:"
-          # @out.puts "s: #{s.inspect}"
-          # @out.puts
+          q = "update eventi set #{sets.join ", "} where uid = '#{s[1]}'"
           @c.query q
           changed+=1
         else
@@ -63,5 +60,7 @@ class Ical2db
   end
 end
 
-cl = Ical2db.new "file:///Users/bkrsta/Projects/raspored-app2/basic.ics", "192.168.1.250", "root", "bkrsta", "ras2_1"
-cl.sync
+if __FILE__ == $0
+  cl = Ical2db.new "file:///Users/bkrsta/Projects/raspored-app2/basic.ics", "192.168.1.250", "root", "bkrsta", "ras2_1", "2009_a"
+  cl.sync
+end
