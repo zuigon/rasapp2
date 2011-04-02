@@ -129,7 +129,7 @@ end
     @str = "20#{str}" if @str =~ /^\d\d_[a-z]$/
 
     @n_tj = 2 # broj tjedana za prikaz
-    ept   = 0
+    ept   = nil
     @tbls = []
     @ev   = []
     (0..@n_tj-1).each{|i|
