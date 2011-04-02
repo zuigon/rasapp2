@@ -146,7 +146,7 @@ end
 
 # B = BackendConnector.new("127.0.0.1:7007")
 
-B = SeqConn.new  *(File.readlines("db.conf").first[/(.+)\n?/,1].split(":")[0..3)
+B = SeqConn.new  *(File.readlines("db.conf").first[/(.+)\n?/,1].split(":")[0..3])
 $log.debug "B = SeqConn.new"
 
 def prvi_dan_tj
