@@ -35,6 +35,9 @@ configure do
   error 500 do
     haml "%h1.err ... excuse me while I kiss the sky! (Greska)\n%h2.err greska se dogodila sada da se ne bi dogodila kasnije"
   end
+  error do
+    haml "%h1.err Grijeska cetiri nula cetiri ..."
+  end
   # set :sessions, true
   # set :logging, true
   # set :dump_errors, false
@@ -44,7 +47,7 @@ configure do
   use Rack::Session::Cookie, :key => '_rasapp2_key1', :domain => 'vps1.bkrsta.co.cc', :secret => 'setnoirsehdoairsh'
 
   set :env, :production
-  set :raise_errors, true
+  # set :raise_errors, true
 
   LOGGER = Logger.new("sinatra.log")
 end
