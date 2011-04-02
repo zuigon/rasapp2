@@ -145,6 +145,8 @@ module CalendarReader
         end
       elsif self.url =~ /^file:/
         return File.read self.url[/file:\/\/(.+)/, 1]
+      else
+        return url # nije URL, nego RAW sadrzaj Cal-a ...
       end
     end
 
@@ -178,7 +180,7 @@ module CalendarReader
         name = pair.shift
         value = pair.join(':')
         case name
-        when 'BEGIN'  #Begin Section
+        when 'BEGIN'
           if structure[-1].has_key?(value)
             if structure[-1][value].is_a?(Array)
               structure[-1][value].push({})
@@ -192,14 +194,14 @@ module CalendarReader
           end
           keys_path.push(value)
           structure.push({})
-        when 'END'    #End Section
+        when 'END'
           if last_is_array
             structure[-2][keys_path.pop][-1] = structure.pop
             last_is_array = false
           else
             structure[-2][keys_path.pop] = structure.pop
           end
-        else          #Within last Section
+        else
           structure[-1][name] = value
         end
       end
