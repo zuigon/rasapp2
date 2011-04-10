@@ -1,4 +1,7 @@
-%w[rubygems active_support/core_ext/numeric/time.rb open-uri ./gcal-lib ./ical2db ./db-lib system_timer].each{|x| require x}
+%w[rubygems active_support/core_ext/numeric/time.rb open-uri ./gcal-lib ./ical2db ./db-lib].each{|x| require x}
+if RUBY_VERSION =~ /^1.8/
+  require "system_timer"
+end
 
 def sync_cals(timeout=600)
   urls = []
