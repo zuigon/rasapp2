@@ -12,7 +12,7 @@ def sync_cals(timeout=600)
   begin
     SystemTimer.timeout_after(timeout.seconds) do
       urls.each{|d|
-        cl = Ical2db.new d[1], "192.168.1.250", "root", "bkrsta", "ras2_1", b.raz_id(*d[0].split("_")) # url, host, user, pass, db, raz_id
+        cl = Ical2db.new d[1], *(File.readlines("db.conf").first[/(.+)\n?/,1].split(":")[0..3] + [b.raz_id *d[0].split("_")]) # url, host, user, pass, db, raz_id
         puts "Sinkroniziram razred '#{d[0]}'\nCAL_URL: '#{d[1]}'"
         cl.sync
       }
