@@ -5,9 +5,14 @@ end
 
 def sync_cals(timeout=600)
   urls = []
-  f = File.read("urls.txt")
-  f.each{|l| urls << (l.scan(/(\d\d\d\d_[a-z]):? *(.+)\n?/).first rescue break) }
-  urls = urls.compact
+  # f = File.read("urls.txt")
+  # f.each{|l| urls << (l.scan(/(\d\d\d\d_[a-z]):? *(.+)\n?/).first rescue break) }
+  # urls = urls.compact
+
+  ss = SeqConn.new *(File.readlines("db.conf").first[/(.+)\n?/,1].split(":")[0..3])
+  ss.open
+  q = ss.query "select gen, raz, calurl from razredi where calurl != ''"
+  while row = q.first; urls << ["#{row[0]}_#{row[1]}", row[2]]; end
 
   b = SeqConn.new *(File.readlines("db.conf").first[/(.+)\n?/,1].split(":")[0..3])
 
