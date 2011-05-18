@@ -53,13 +53,13 @@ def koji_sat?(vrijeme)
   return nil
 end
 
-def kada_sat?(smjena, sat)
+def kada_sat?(smjena, sat, skr=false)
   odmori = [5, 15 ,5, 10, 5, 5]
   bl = lambda {|start, smj|
     t=start=Time.parse(start); i=1; lasto=0
     for o in odmori+[0]
       poc, kr = t, nil
-      t+=45.minuta
+      t+= (skr ? 40 : 45).minuta
       t-=5.minuta if smj==1 && t.frm=="13:00" # 7.h 1. smjene 40min
       kr = t
       return "#{poc.frm} - #{kr.frm}" if smjena==smj && i==sat
