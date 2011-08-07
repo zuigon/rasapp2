@@ -1,7 +1,7 @@
 require "rubygems"
 require "./gcal-lib.rb"
-gem "ruby-mysql", "= 2.9.3"
-require "mysql"
+# gem "ruby-mysql", "= 2.9.3"
+# require "mysql"
 
 class Ical2db
   def initialize(cal, mhost, muser, mpass, mdb, raz_id=0)
@@ -11,6 +11,9 @@ class Ical2db
   end
 
   def sync()
+    puts "iCal2DB DEPRECATED"
+    return
+
     inserted, changed, skipped, deleted = *[0]*4
     cols = %w(raz_id uid txt dsc dan)
 

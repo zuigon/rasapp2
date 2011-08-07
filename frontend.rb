@@ -14,22 +14,22 @@ DANI = %w(pon uto sri cet pet sub ned)
 # $syncing = 0
 
 x = Thread.new {
-  sync_timeout = 600
-  sleep 5
-  loop do
-    begin
-      start_t = Time.now
-      # $syncing=1
-      sync_cals(sync_timeout-1)
-      # $syncing=0
-      razl = (Time.now-start_t)
-      sleep sync_timeout-razl.to_i if razl>0
-      # puts "[syncer] sync end"
-    rescue Exception => e
-      puts "[syncer] ERROR: #{e}"
-      break
-    end
-  end
+  # sync_timeout = 600
+  # sleep 5
+  # loop do
+  #   begin
+  #     start_t = Time.now
+  #     # $syncing=1
+  #     sync_cals(sync_timeout-1)
+  #     # $syncing=0
+  #     razl = (Time.now-start_t)
+  #     sleep sync_timeout-razl.to_i if razl>0
+  #     # puts "[syncer] sync end"
+  #   rescue Exception => e
+  #     puts "[syncer] ERROR: #{e}"
+  #     break
+  #   end
+  # end
 }
 
 configure do
@@ -56,7 +56,7 @@ helpers do
   end
 end
 
-B = SeqConn.new *(File.readlines("db.conf").first[/(.+)\n?/,1].split(":")[0..3])
+B = SeqConn.new # *(File.readlines("db.conf").first[/(.+)\n?/,1].split(":")[0..3])
 
 def smjena(datum) # in: <Time>; out: 0 ili 1 (jut. ili pod.)
   d=Date.strptime(POC_DATUM[0], "%d.%m.%Y")
@@ -76,9 +76,10 @@ def raz(str) # 2009_a => 2.a
 end
 
 def ras_za_tj(raz_str, tj)
-  ra = B.raspored(B.raz_id(*raz_str.split('_')))
-  rr={}; ra.each{|r| rr[x=r[1]["sat"].to_i]=r[1]; rr[x].delete("sat")}
-  rr
+  ra = B.raspored(B.raz_id(*raz_str.split('_')).to_i)
+  # rr={}; ra.each{|r| rr[x=r[1]["sat"].to_i]=r[1]; rr[x].delete("sat")}
+  # rr
+  ra
 end
 
 
@@ -106,7 +107,9 @@ end
       @ev[i]={}
       ept=1 and break if r=={}
       DANI.each{|x| @ev[i][x]=[] }
-      B.eventi(B.raz_id(*@str.split("_")), i).each{|e| @ev[i][DANI[e[0].to_i]] << [e[1], e[2]] }
+      B.eventi(B.raz_id(*@str.split("_")), i).each{|e|
+        @ev[i][DANI[e[0].to_i]] << [e[1], e[2]]
+      }
     }
 
     haml ept ? :ras_nije_podesen : :razred
