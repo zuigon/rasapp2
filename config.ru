@@ -1,1 +1,1 @@
-require "frontend"
+require "./frontend"
