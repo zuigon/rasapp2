@@ -8,7 +8,7 @@ if File.exist? 'to_log'
   STDERR.reopen($log_file)
 end
 
-POC_DATUM = ["6.9.2010", 0]
+POC_DATUM = ["6.9.2011", 0]
 DANI = %w(pon uto sri cet pet sub ned)
 
 # $syncing = 0
@@ -108,7 +108,10 @@ end
       ept=1 and break if r=={}
       DANI.each{|x| @ev[i][x]=[] }
       B.eventi(B.raz_id(*@str.split("_")), i).each{|e|
-        @ev[i][DANI[e[0].to_i]] << [e[1], e[2]]
+        begin
+          @ev[i][DANI[e[0].to_i]] << [e[1], e[2]]
+        rescue
+        end
       }
     }
 
